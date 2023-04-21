@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package com.github.coltonprovias.gopasslib.proto;
+
+option go_package = "github.com/ColtonProvias/gopasslib/proto";
