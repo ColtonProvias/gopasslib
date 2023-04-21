@@ -3,3 +3,24 @@ syntax = "proto3";
 package com.github.coltonprovias.gopasslib.proto;
 
 option go_package = "github.com/ColtonProvias/gopasslib/proto";
+
+message PasswordArgon2 {}
+
+message PasswordBcrypt {}
+
+message PasswordScrypt {}
+
+message PasswordPBKDF2 {}
+
+// PasswordContainer stores hashed passwords. All serialization/deserialization
+// of passwords should use this rather than algorithm-specific messages. Doing
+// as such helps for easier fallback to old algorithms when the default
+// algorithm is changed.
+message PasswordContainer {
+    oneof hashed_password {
+        PasswordArgon2 argon2 = 1;
+        PasswordBcrypt bcrypt = 2;
+        PasswordScrypt scrypt = 3;
+        PasswordPBKDF2 pbkdf2 = 4;
+    }
+}
