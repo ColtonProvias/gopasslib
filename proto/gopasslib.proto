@@ -59,7 +59,23 @@ message PasswordBcrypt {
     uint32 cost = 4;
 }
 
-message PasswordScrypt {}
+// PasswordScrypt provides protobuf serialization for scrypt hashed passwords.
+message PasswordScrypt {
+    // Hash is the checksum generated from the scrypt algorithm.
+    bytes hash = 1;
+
+    // The salt used in the hashing operation.
+    bytes salt = 2;
+
+    // The CPU/memory cost parameter, often called N.
+    uint64 cost = 3;
+
+    // The block size used. Also called r.
+    uint64 block_size = 4;
+
+    // The parallel count parameter for scrypt. Also called p.
+    uint64 parallel_count = 5;
+}
 
 // PasswordPBKDF2 provides protobuf serialization for PBKDF2-hashed passwords.
 message PasswordPBKDF2 {
