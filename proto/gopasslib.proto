@@ -61,7 +61,34 @@ message PasswordBcrypt {
 
 message PasswordScrypt {}
 
-message PasswordPBKDF2 {}
+// PasswordPBKDF2 provides protobuf serialization for PBKDF2-hashed passwords.
+message PasswordPBKDF2 {
+    // Accepted hash algorithms. PBKDF2 is quite flexible and can support many
+    // more than this, but we'll stick to what Go's standard and crypto
+    // libraries provide.
+    enum HashAlgorithm {
+        PBKDF2_HASH_UNDEFINED = 0;
+        PBKDF2_HASH_SHA1 = 1;
+        PBKDF2_HASH_SHA256 = 2;
+        PBKDF2_HASH_SHA384 = 3;
+        PBKDF2_HASH_SHA512 = 4;
+        PBKDF2_HASH_SHA3 = 5;
+        PBKDF2_HASH_MD5 = 6;
+    }
+
+    // The hash algorithm used in the PBKDF2 operation.
+    HashAlgorithm hash_algorithm = 1;
+
+    // The hashed password.
+    bytes hash = 2;
+
+    // The salt used in hashing.
+    bytes salt = 3;
+
+    // Number of iterations performed on each block.
+    uint64 iterations = 4;
+    
+}
 
 // PasswordContainer stores hashed passwords. All serialization/deserialization
 // of passwords should use this rather than algorithm-specific messages. Doing
