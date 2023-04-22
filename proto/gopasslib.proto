@@ -4,7 +4,39 @@ package com.github.coltonprovias.gopasslib.proto;
 
 option go_package = "github.com/ColtonProvias/gopasslib/proto";
 
-message PasswordArgon2 {}
+// PasswordArgon2 serializes a hashed Argon 2 password into a protobuf format.
+message PasswordArgon2 {
+    // Argon2 variants. Go currently supports argon2i and argon2id, so both
+    // are provided.
+    enum Variant {
+        VARIANT_UNDEFINED = 0;
+        VARIANT_I = 1;
+        VARIANT_ID = 2;
+    }
+
+    // The hashed Argon2 password.
+    bytes hash = 1;
+
+    // Variant is the Argon2 variant. Go's argon2 library provides i and id, so
+    // we support both.
+    Variant variant = 2;
+
+    // Version is the version of the Argon 2 algorithm. This should usually be
+    // version 0x13.
+    uint32 version = 3;
+
+    // Salt is a randomly generated salt used in the hashing rounds.
+    bytes salt = 4;
+
+    // Time is the number of passes over the memory.
+    uint32 time = 5;
+
+    // The amount of memory to use for hashing in KiB.
+    uint32 memory_kib = 6;
+
+    // The number of CPU threads to use.
+    uint32 threads = 7;
+}
 
 message PasswordBcrypt {}
 
