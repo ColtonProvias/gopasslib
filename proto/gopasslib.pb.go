@@ -182,6 +182,60 @@ func (PasswordPBKDF2_HashAlgorithm) EnumDescriptor() ([]byte, []int) {
 	return file_proto_gopasslib_proto_rawDescGZIP(), []int{3, 0}
 }
 
+// The HTOP specification defines the use of SHA-1, while TOTP extends to
+// SHA-256 and SHA-512.
+type TOTP_HashAlgorithm int32
+
+const (
+	TOTP_HASH_ALGORITHM_UNDEFINED TOTP_HashAlgorithm = 0
+	TOTP_HASH_ALGORITHM_SHA_1     TOTP_HashAlgorithm = 1
+	TOTP_HASH_ALGORITHM_SHA_256   TOTP_HashAlgorithm = 2
+	TOTP_HASH_ALGORITHM_SHA_512   TOTP_HashAlgorithm = 3
+)
+
+// Enum value maps for TOTP_HashAlgorithm.
+var (
+	TOTP_HashAlgorithm_name = map[int32]string{
+		0: "HASH_ALGORITHM_UNDEFINED",
+		1: "HASH_ALGORITHM_SHA_1",
+		2: "HASH_ALGORITHM_SHA_256",
+		3: "HASH_ALGORITHM_SHA_512",
+	}
+	TOTP_HashAlgorithm_value = map[string]int32{
+		"HASH_ALGORITHM_UNDEFINED": 0,
+		"HASH_ALGORITHM_SHA_1":     1,
+		"HASH_ALGORITHM_SHA_256":   2,
+		"HASH_ALGORITHM_SHA_512":   3,
+	}
+)
+
+func (x TOTP_HashAlgorithm) Enum() *TOTP_HashAlgorithm {
+	p := new(TOTP_HashAlgorithm)
+	*p = x
+	return p
+}
+
+func (x TOTP_HashAlgorithm) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TOTP_HashAlgorithm) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_gopasslib_proto_enumTypes[3].Descriptor()
+}
+
+func (TOTP_HashAlgorithm) Type() protoreflect.EnumType {
+	return &file_proto_gopasslib_proto_enumTypes[3]
+}
+
+func (x TOTP_HashAlgorithm) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TOTP_HashAlgorithm.Descriptor instead.
+func (TOTP_HashAlgorithm) EnumDescriptor() ([]byte, []int) {
+	return file_proto_gopasslib_proto_rawDescGZIP(), []int{5, 0}
+}
+
 // PasswordArgon2 serializes a hashed Argon 2 password into a protobuf format.
 type PasswordArgon2 struct {
 	state         protoimpl.MessageState
@@ -637,6 +691,113 @@ func (*PasswordContainer_Scrypt) isPasswordContainer_HashedPassword() {}
 
 func (*PasswordContainer_Pbkdf2) isPasswordContainer_HashedPassword() {}
 
+// Stores a TOTP secret and other metadata for generation and verification of
+// TOTP tokens.
+type TOTP struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The secret used in the HMAC operation.
+	Secret []byte `protobuf:"bytes,1,opt,name=secret,proto3" json:"secret,omitempty"`
+	// The hash algorithm used in the HMAC operation.
+	HashAlgorithm TOTP_HashAlgorithm `protobuf:"varint,2,opt,name=hash_algorithm,json=hashAlgorithm,proto3,enum=com.github.coltonprovias.gopasslib.proto.TOTP_HashAlgorithm" json:"hash_algorithm,omitempty"`
+	// The issuer of the TOTP secret.
+	Issuer string `protobuf:"bytes,3,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	// The account tied to the TOTP secret. We store it here so this library
+	// can also be used in client apps, which often accept the account.
+	AccountName string `protobuf:"bytes,4,opt,name=account_name,json=accountName,proto3" json:"account_name,omitempty"`
+	// The number of digits to generate. This should be between 6 and 9
+	// inclusive.
+	Digits uint32 `protobuf:"varint,5,opt,name=digits,proto3" json:"digits,omitempty"`
+	// The number of seconds for each period. The recommendation is 30.
+	PeriodSeconds uint32 `protobuf:"varint,6,opt,name=period_seconds,json=periodSeconds,proto3" json:"period_seconds,omitempty"`
+	// The number of periods to look back through during verification. Must be a
+	// minimum of 1 to account for network delay. The recommendation is 1.
+	LookbackPeriods uint32 `protobuf:"varint,7,opt,name=lookback_periods,json=lookbackPeriods,proto3" json:"lookback_periods,omitempty"`
+}
+
+func (x *TOTP) Reset() {
+	*x = TOTP{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_gopasslib_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TOTP) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TOTP) ProtoMessage() {}
+
+func (x *TOTP) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_gopasslib_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TOTP.ProtoReflect.Descriptor instead.
+func (*TOTP) Descriptor() ([]byte, []int) {
+	return file_proto_gopasslib_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *TOTP) GetSecret() []byte {
+	if x != nil {
+		return x.Secret
+	}
+	return nil
+}
+
+func (x *TOTP) GetHashAlgorithm() TOTP_HashAlgorithm {
+	if x != nil {
+		return x.HashAlgorithm
+	}
+	return TOTP_HASH_ALGORITHM_UNDEFINED
+}
+
+func (x *TOTP) GetIssuer() string {
+	if x != nil {
+		return x.Issuer
+	}
+	return ""
+}
+
+func (x *TOTP) GetAccountName() string {
+	if x != nil {
+		return x.AccountName
+	}
+	return ""
+}
+
+func (x *TOTP) GetDigits() uint32 {
+	if x != nil {
+		return x.Digits
+	}
+	return 0
+}
+
+func (x *TOTP) GetPeriodSeconds() uint32 {
+	if x != nil {
+		return x.PeriodSeconds
+	}
+	return 0
+}
+
+func (x *TOTP) GetLookbackPeriods() uint32 {
+	if x != nil {
+		return x.LookbackPeriods
+	}
+	return 0
+}
+
 var File_proto_gopasslib_proto protoreflect.FileDescriptor
 
 var file_proto_gopasslib_proto_rawDesc = []byte{
@@ -734,10 +895,37 @@ var file_proto_gopasslib_proto_rawDesc = []byte{
 	0x67, 0x6f, 0x70, 0x61, 0x73, 0x73, 0x6c, 0x69, 0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
 	0x50, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x50, 0x42, 0x4b, 0x44, 0x46, 0x32, 0x48, 0x00,
 	0x52, 0x06, 0x70, 0x62, 0x6b, 0x64, 0x66, 0x32, 0x42, 0x11, 0x0a, 0x0f, 0x68, 0x61, 0x73, 0x68,
-	0x65, 0x64, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x42, 0x2a, 0x5a, 0x28, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x43, 0x6f, 0x6c, 0x74, 0x6f, 0x6e,
-	0x50, 0x72, 0x6f, 0x76, 0x69, 0x61, 0x73, 0x2f, 0x67, 0x6f, 0x70, 0x61, 0x73, 0x73, 0x6c, 0x69,
-	0x62, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x64, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x22, 0xa9, 0x03, 0x0a, 0x04,
+	0x54, 0x4f, 0x54, 0x50, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0c, 0x52, 0x06, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x12, 0x63, 0x0a, 0x0e,
+	0x68, 0x61, 0x73, 0x68, 0x5f, 0x61, 0x6c, 0x67, 0x6f, 0x72, 0x69, 0x74, 0x68, 0x6d, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x3c, 0x2e, 0x63, 0x6f, 0x6d, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6c, 0x74, 0x6f, 0x6e, 0x70, 0x72, 0x6f, 0x76, 0x69, 0x61, 0x73, 0x2e,
+	0x67, 0x6f, 0x70, 0x61, 0x73, 0x73, 0x6c, 0x69, 0x62, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
+	0x54, 0x4f, 0x54, 0x50, 0x2e, 0x48, 0x61, 0x73, 0x68, 0x41, 0x6c, 0x67, 0x6f, 0x72, 0x69, 0x74,
+	0x68, 0x6d, 0x52, 0x0d, 0x68, 0x61, 0x73, 0x68, 0x41, 0x6c, 0x67, 0x6f, 0x72, 0x69, 0x74, 0x68,
+	0x6d, 0x12, 0x16, 0x0a, 0x06, 0x69, 0x73, 0x73, 0x75, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x06, 0x69, 0x73, 0x73, 0x75, 0x65, 0x72, 0x12, 0x21, 0x0a, 0x0c, 0x61, 0x63, 0x63,
+	0x6f, 0x75, 0x6e, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x0b, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x16, 0x0a, 0x06,
+	0x64, 0x69, 0x67, 0x69, 0x74, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x06, 0x64, 0x69,
+	0x67, 0x69, 0x74, 0x73, 0x12, 0x25, 0x0a, 0x0e, 0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x5f, 0x73,
+	0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0d, 0x70, 0x65,
+	0x72, 0x69, 0x6f, 0x64, 0x53, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x12, 0x29, 0x0a, 0x10, 0x6c,
+	0x6f, 0x6f, 0x6b, 0x62, 0x61, 0x63, 0x6b, 0x5f, 0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x73, 0x18,
+	0x07, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x0f, 0x6c, 0x6f, 0x6f, 0x6b, 0x62, 0x61, 0x63, 0x6b, 0x50,
+	0x65, 0x72, 0x69, 0x6f, 0x64, 0x73, 0x22, 0x7f, 0x0a, 0x0d, 0x48, 0x61, 0x73, 0x68, 0x41, 0x6c,
+	0x67, 0x6f, 0x72, 0x69, 0x74, 0x68, 0x6d, 0x12, 0x1c, 0x0a, 0x18, 0x48, 0x41, 0x53, 0x48, 0x5f,
+	0x41, 0x4c, 0x47, 0x4f, 0x52, 0x49, 0x54, 0x48, 0x4d, 0x5f, 0x55, 0x4e, 0x44, 0x45, 0x46, 0x49,
+	0x4e, 0x45, 0x44, 0x10, 0x00, 0x12, 0x18, 0x0a, 0x14, 0x48, 0x41, 0x53, 0x48, 0x5f, 0x41, 0x4c,
+	0x47, 0x4f, 0x52, 0x49, 0x54, 0x48, 0x4d, 0x5f, 0x53, 0x48, 0x41, 0x5f, 0x31, 0x10, 0x01, 0x12,
+	0x1a, 0x0a, 0x16, 0x48, 0x41, 0x53, 0x48, 0x5f, 0x41, 0x4c, 0x47, 0x4f, 0x52, 0x49, 0x54, 0x48,
+	0x4d, 0x5f, 0x53, 0x48, 0x41, 0x5f, 0x32, 0x35, 0x36, 0x10, 0x02, 0x12, 0x1a, 0x0a, 0x16, 0x48,
+	0x41, 0x53, 0x48, 0x5f, 0x41, 0x4c, 0x47, 0x4f, 0x52, 0x49, 0x54, 0x48, 0x4d, 0x5f, 0x53, 0x48,
+	0x41, 0x5f, 0x35, 0x31, 0x32, 0x10, 0x03, 0x42, 0x2a, 0x5a, 0x28, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x43, 0x6f, 0x6c, 0x74, 0x6f, 0x6e, 0x50, 0x72, 0x6f, 0x76,
+	0x69, 0x61, 0x73, 0x2f, 0x67, 0x6f, 0x70, 0x61, 0x73, 0x73, 0x6c, 0x69, 0x62, 0x2f, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -752,31 +940,34 @@ func file_proto_gopasslib_proto_rawDescGZIP() []byte {
 	return file_proto_gopasslib_proto_rawDescData
 }
 
-var file_proto_gopasslib_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_proto_gopasslib_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_proto_gopasslib_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_proto_gopasslib_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_proto_gopasslib_proto_goTypes = []interface{}{
 	(PasswordArgon2_Variant)(0),       // 0: com.github.coltonprovias.gopasslib.proto.PasswordArgon2.Variant
 	(PasswordBcrypt_Version)(0),       // 1: com.github.coltonprovias.gopasslib.proto.PasswordBcrypt.Version
 	(PasswordPBKDF2_HashAlgorithm)(0), // 2: com.github.coltonprovias.gopasslib.proto.PasswordPBKDF2.HashAlgorithm
-	(*PasswordArgon2)(nil),            // 3: com.github.coltonprovias.gopasslib.proto.PasswordArgon2
-	(*PasswordBcrypt)(nil),            // 4: com.github.coltonprovias.gopasslib.proto.PasswordBcrypt
-	(*PasswordScrypt)(nil),            // 5: com.github.coltonprovias.gopasslib.proto.PasswordScrypt
-	(*PasswordPBKDF2)(nil),            // 6: com.github.coltonprovias.gopasslib.proto.PasswordPBKDF2
-	(*PasswordContainer)(nil),         // 7: com.github.coltonprovias.gopasslib.proto.PasswordContainer
+	(TOTP_HashAlgorithm)(0),           // 3: com.github.coltonprovias.gopasslib.proto.TOTP.HashAlgorithm
+	(*PasswordArgon2)(nil),            // 4: com.github.coltonprovias.gopasslib.proto.PasswordArgon2
+	(*PasswordBcrypt)(nil),            // 5: com.github.coltonprovias.gopasslib.proto.PasswordBcrypt
+	(*PasswordScrypt)(nil),            // 6: com.github.coltonprovias.gopasslib.proto.PasswordScrypt
+	(*PasswordPBKDF2)(nil),            // 7: com.github.coltonprovias.gopasslib.proto.PasswordPBKDF2
+	(*PasswordContainer)(nil),         // 8: com.github.coltonprovias.gopasslib.proto.PasswordContainer
+	(*TOTP)(nil),                      // 9: com.github.coltonprovias.gopasslib.proto.TOTP
 }
 var file_proto_gopasslib_proto_depIdxs = []int32{
 	0, // 0: com.github.coltonprovias.gopasslib.proto.PasswordArgon2.variant:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordArgon2.Variant
 	1, // 1: com.github.coltonprovias.gopasslib.proto.PasswordBcrypt.version:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordBcrypt.Version
 	2, // 2: com.github.coltonprovias.gopasslib.proto.PasswordPBKDF2.hash_algorithm:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordPBKDF2.HashAlgorithm
-	3, // 3: com.github.coltonprovias.gopasslib.proto.PasswordContainer.argon2:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordArgon2
-	4, // 4: com.github.coltonprovias.gopasslib.proto.PasswordContainer.bcrypt:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordBcrypt
-	5, // 5: com.github.coltonprovias.gopasslib.proto.PasswordContainer.scrypt:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordScrypt
-	6, // 6: com.github.coltonprovias.gopasslib.proto.PasswordContainer.pbkdf2:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordPBKDF2
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	4, // 3: com.github.coltonprovias.gopasslib.proto.PasswordContainer.argon2:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordArgon2
+	5, // 4: com.github.coltonprovias.gopasslib.proto.PasswordContainer.bcrypt:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordBcrypt
+	6, // 5: com.github.coltonprovias.gopasslib.proto.PasswordContainer.scrypt:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordScrypt
+	7, // 6: com.github.coltonprovias.gopasslib.proto.PasswordContainer.pbkdf2:type_name -> com.github.coltonprovias.gopasslib.proto.PasswordPBKDF2
+	3, // 7: com.github.coltonprovias.gopasslib.proto.TOTP.hash_algorithm:type_name -> com.github.coltonprovias.gopasslib.proto.TOTP.HashAlgorithm
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_proto_gopasslib_proto_init() }
@@ -845,6 +1036,18 @@ func file_proto_gopasslib_proto_init() {
 				return nil
 			}
 		}
+		file_proto_gopasslib_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TOTP); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_proto_gopasslib_proto_msgTypes[4].OneofWrappers = []interface{}{
 		(*PasswordContainer_Argon2)(nil),
@@ -857,8 +1060,8 @@ func file_proto_gopasslib_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_gopasslib_proto_rawDesc,
-			NumEnums:      3,
-			NumMessages:   5,
+			NumEnums:      4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

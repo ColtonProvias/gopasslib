@@ -118,3 +118,40 @@ message PasswordContainer {
         PasswordPBKDF2 pbkdf2 = 4;
     }
 }
+
+// Stores a TOTP secret and other metadata for generation and verification of
+// TOTP tokens.
+message TOTP {
+    // The HTOP specification defines the use of SHA-1, while TOTP extends to
+    // SHA-256 and SHA-512.
+    enum HashAlgorithm {
+        HASH_ALGORITHM_UNDEFINED = 0;
+        HASH_ALGORITHM_SHA_1 = 1;
+        HASH_ALGORITHM_SHA_256 = 2;
+        HASH_ALGORITHM_SHA_512 = 3;
+    }
+
+    // The secret used in the HMAC operation.
+    bytes secret = 1;
+
+    // The hash algorithm used in the HMAC operation.
+    HashAlgorithm hash_algorithm = 2;
+
+    // The issuer of the TOTP secret.
+    string issuer = 3;
+
+    // The account tied to the TOTP secret. We store it here so this library
+    // can also be used in client apps, which often accept the account.
+    string account_name = 4;
+
+    // The number of digits to generate. This should be between 6 and 9
+    // inclusive.
+    uint32 digits = 5;
+
+    // The number of seconds for each period. The recommendation is 30.
+    uint32 period_seconds = 6;
+
+    // The number of periods to look back through during verification. Must be a
+    // minimum of 1 to account for network delay. The recommendation is 1.
+    uint32 lookback_periods = 7;
+}
