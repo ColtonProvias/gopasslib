@@ -38,7 +38,26 @@ message PasswordArgon2 {
     uint32 threads = 7;
 }
 
-message PasswordBcrypt {}
+// PasswordBcrypt provides protobuf encoding of bcrypted hashes.
+message PasswordBcrypt {
+    // Go only provides support for generating bcrypt 2a hashes.
+    enum Version {
+        VERSION_UNDEFINED = 0;
+        VERSION_2A = 1;
+    }
+
+    // The version of the bcrypt algorithm used.
+    Version version = 1;
+
+    // The hashed password.
+    bytes hash = 2;
+
+    // The salt used in hashing.
+    bytes salt = 3;
+
+    // The bcrypt cost parameter.
+    uint32 cost = 4;
+}
 
 message PasswordScrypt {}
 
