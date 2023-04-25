@@ -14,6 +14,10 @@ linters:
     - testpackage
     - varcheck
 linters-settings:
+  cyclop:
+    skip-tests: false
+    max-complexity: 15
+    package-average: 0
   exhaustive:
     default-signifies-exhaustive: true
   paralleltest:
