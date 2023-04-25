@@ -11,6 +11,7 @@ linters:
     - nosnakecase
     - scopelint
     - structcheck
+    - testpackage
     - varcheck
 linters-settings:
   exhaustive:
