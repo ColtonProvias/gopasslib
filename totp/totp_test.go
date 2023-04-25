@@ -428,3 +428,127 @@ func TestMarshal(t *testing.T) {
 		t.Errorf("Marshal() mismatch (-want +got):\n%s", diff)
 	}
 }
+
+func TestUnmarshal(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		in      proto.Message
+		want    *TOTP
+		wantErr error
+	}{
+		{
+			name: "good",
+			in: &pb.TOTP{
+				Secret:          []byte("1234567890"),
+				Issuer:          "gopasslib",
+				AccountName:     "alice@bob.eve",
+				PeriodSeconds:   30,
+				Digits:          8,
+				LookbackPeriods: 1,
+				HashAlgorithm:   pb.TOTP_HASH_ALGORITHM_SHA_256,
+			},
+			want: &TOTP{
+				secret:      []byte("1234567890"),
+				issuer:      "gopasslib",
+				accountName: "alice@bob.eve",
+				period:      30 * time.Second,
+				digits:      8,
+				lookback:    1,
+				algorithm:   SHA256,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "missing algorithm",
+			in: &pb.TOTP{
+				Secret:          []byte("1234567890"),
+				Issuer:          "gopasslib",
+				AccountName:     "alice@bob.eve",
+				PeriodSeconds:   30,
+				Digits:          8,
+				LookbackPeriods: 1,
+			},
+			want:    nil,
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "missing secret",
+			in: &pb.TOTP{
+				Issuer:          "gopasslib",
+				AccountName:     "alice@bob.eve",
+				PeriodSeconds:   30,
+				Digits:          8,
+				LookbackPeriods: 1,
+				HashAlgorithm:   pb.TOTP_HASH_ALGORITHM_SHA_512,
+			},
+			want:    nil,
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "missing issuer",
+			in: &pb.TOTP{
+				Secret:          []byte("1234567890"),
+				AccountName:     "alice@bob.eve",
+				PeriodSeconds:   30,
+				Digits:          8,
+				LookbackPeriods: 1,
+				HashAlgorithm:   pb.TOTP_HASH_ALGORITHM_SHA_512,
+			},
+			want:    nil,
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "missing account name",
+			in: &pb.TOTP{
+				Secret:          []byte("1234567890"),
+				Issuer:          "gopasslib",
+				PeriodSeconds:   30,
+				Digits:          8,
+				LookbackPeriods: 1,
+				HashAlgorithm:   pb.TOTP_HASH_ALGORITHM_SHA_512,
+			},
+			want:    nil,
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "missing periods",
+			in: &pb.TOTP{
+				Secret:          []byte("1234567890"),
+				Issuer:          "gopasslib",
+				AccountName:     "alice@bob.eve",
+				Digits:          8,
+				LookbackPeriods: 1,
+				HashAlgorithm:   pb.TOTP_HASH_ALGORITHM_SHA_512,
+			},
+			want:    nil,
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "mmissing digits",
+			in: &pb.TOTP{
+				Secret:          []byte("1234567890"),
+				Issuer:          "gopasslib",
+				AccountName:     "alice@bob.eve",
+				PeriodSeconds:   30,
+				LookbackPeriods: 1,
+				HashAlgorithm:   pb.TOTP_HASH_ALGORITHM_SHA_512,
+			},
+			want:    nil,
+			wantErr: ErrInvalid,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			encoded, err := proto.Marshal(test.in)
+			if err != nil {
+				t.Fatalf("proto.Marshal() failed: %s", err)
+			}
+			got, gotErr := Unmarshal(encoded)
+			if !errors.Is(gotErr, test.wantErr) {
+				t.Errorf("Unmarshal() err = %s, want %s", gotErr, test.wantErr)
+			}
+			if diff := cmp.Diff(test.want, got, cmp.AllowUnexported(TOTP{})); diff != "" {
+				t.Errorf("Unmarshal() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

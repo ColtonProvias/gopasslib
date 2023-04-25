@@ -32,8 +32,6 @@ const (
 	defaultLookback     = 1
 )
 
-var errUnimplemented = errors.New("unimplemented")
-
 // ErrInvalid is returned when a parameter fails validation.
 var ErrInvalid = errors.New("invalid")
 
@@ -69,6 +67,12 @@ var algToProto = map[HashAlgorithm]pb.TOTP_HashAlgorithm{ //nolint:gochecknoglob
 	SHA1:   pb.TOTP_HASH_ALGORITHM_SHA_1,
 	SHA256: pb.TOTP_HASH_ALGORITHM_SHA_256,
 	SHA512: pb.TOTP_HASH_ALGORITHM_SHA_512,
+}
+
+var protoToAlg = map[pb.TOTP_HashAlgorithm]HashAlgorithm{ //nolint:gochecknoglobals
+	pb.TOTP_HASH_ALGORITHM_SHA_1:   SHA1,
+	pb.TOTP_HASH_ALGORITHM_SHA_256: SHA256,
+	pb.TOTP_HASH_ALGORITHM_SHA_512: SHA512,
 }
 
 var algToHash = map[HashAlgorithm]func() hash.Hash{ //nolint:gochecknoglobals
@@ -161,9 +165,59 @@ func New(params Params) (*TOTP, error) {
 	}, nil
 }
 
+func validateProto(msg *pb.TOTP) error {
+	var errs []error
+
+	if _, ok := protoToAlg[msg.HashAlgorithm]; !ok {
+		errs = append(errs, fmt.Errorf("unknown hash algorithm: %w", ErrInvalid))
+	}
+
+	if len(msg.Secret) == 0 {
+		errs = append(errs, fmt.Errorf("secret must not be empty: %w", ErrInvalid))
+	}
+
+	if msg.Issuer == "" {
+		errs = append(errs, fmt.Errorf("issuer must not be empty: %w", ErrInvalid))
+	}
+
+	if msg.AccountName == "" {
+		errs = append(errs, fmt.Errorf("account name must not be empty: %w", ErrInvalid))
+	}
+
+	if msg.PeriodSeconds == 0 {
+		errs = append(errs, fmt.Errorf("period must be greater than 0: %w", ErrInvalid))
+	}
+
+	if msg.Digits < 6 || msg.Digits > 9 {
+		errs = append(errs, fmt.Errorf("digits must be between 6 to 9 inclusive: %w", ErrInvalid))
+	}
+
+	return errors.Join(errs...)
+}
+
 // Unmarshal loads a proto-encoded TOTP message. This should be used when
 // loading TOTP secrets from storage.
-func Unmarshal(_ []byte) (*TOTP, error) { return nil, errUnimplemented }
+func Unmarshal(encoded []byte) (*TOTP, error) {
+	msg := &pb.TOTP{}
+
+	if err := proto.Unmarshal(encoded, msg); err != nil {
+		return nil, fmt.Errorf("could not unmarshal TOTP: %w", err)
+	}
+
+	if err := validateProto(msg); err != nil {
+		return nil, err
+	}
+
+	return &TOTP{
+		secret:      msg.Secret,
+		algorithm:   protoToAlg[msg.HashAlgorithm],
+		issuer:      msg.Issuer,
+		accountName: msg.AccountName,
+		period:      time.Duration(msg.PeriodSeconds) * time.Second,
+		lookback:    uint(msg.LookbackPeriods),
+		digits:      uint8(msg.Digits),
+	}, nil
+}
 
 // FromString loads a URI-encoded TOTP message. This should be used when loading
 // TOTP secrets from a QR Code.
