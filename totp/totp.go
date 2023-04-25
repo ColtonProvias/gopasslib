@@ -2,9 +2,15 @@
 package totp
 
 import (
+	"crypto/hmac"
+	"crypto/sha1" //nolint:gosec
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base32"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash"
 	"math"
 	"net/url"
 	"sort"
@@ -43,6 +49,12 @@ var stringToAlg = map[string]HashAlgorithm{ //nolint:gochecknoglobals
 	"SHA1":   SHA1,
 	"SHA256": SHA256,
 	"SHA512": SHA512,
+}
+
+var algToHash = map[HashAlgorithm]func() hash.Hash{ //nolint:gochecknoglobals
+	SHA1:   sha1.New,
+	SHA256: sha256.New,
+	SHA512: sha512.New,
 }
 
 // TOTP is used to generate and verify Timed One Time Password tokens.
@@ -175,8 +187,30 @@ func (t *TOTP) Secret() string {
 	return strings.Join(chunkString(encoded), "-")
 }
 
+func (t *TOTP) hotp(counter uint64) (string, error) {
+	hf := algToHash[t.algorithm]
+	h := hmac.New(hf, t.secret)
+
+	if err := binary.Write(h, binary.BigEndian, counter); err != nil {
+		return "", fmt.Errorf("failed to write counter: %w", err)
+	}
+
+	hs := h.Sum(nil)
+	offset := hs[len(hs)-1] & 0xf                                      //nolint:gomnd
+	sbits := binary.BigEndian.Uint32(hs[offset:offset+4]) & 0x7fffffff //nolint:gomnd
+	format := fmt.Sprintf("%%0%dd", t.digits)
+
+	return fmt.Sprintf(format, sbits%uint32(math.Pow10(int(t.digits)))), nil
+}
+
+func (t *TOTP) totp(ts time.Time) (string, error) {
+	return t.hotp(uint64(ts.Unix() / int64(t.period.Seconds())))
+}
+
 // Generate generates a new TOTP.
-func (t *TOTP) Generate() (string, error) { return "", errUnimplemented }
+func (t *TOTP) Generate() (string, error) {
+	return t.totp(time.Now())
+}
 
 // Verify verifies a given TOTP.
 func (t *TOTP) Verify(_ string) error { return errUnimplemented }
