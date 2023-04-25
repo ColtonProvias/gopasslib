@@ -18,6 +18,15 @@ linters-settings:
     default-signifies-exhaustive: true
   paralleltest:
     ignore-missing: true
+  varnamelen:
+    max-distance: 10
+    min-name-length: 3
+    check-receiver: false
+    check-return: false
+    check-type-param: false
+    ignore-type-assert-ok: false
+    ignore-map-index-ok: false
+    ignore-chan-recv-ok: false
 issues:
   exclude-use-default: false
 output:

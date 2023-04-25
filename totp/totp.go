@@ -1,12 +1,23 @@
 // Package totp is used to generate and verify Timed One-Time Passwords.
 package totp
 
-import "errors"
+import (
+	"encoding/base32"
+	"errors"
+	"math"
+	"strings"
+)
+
+const secretChunkSize = 4
 
 var errUnimplemented = errors.New("unimplemented")
 
+var ErrUnsupportedAlgorithm = errors.New("unsupported algorithm")
+
 // TOTP is used to generate and verify Timed One Time Password tokens.
-type TOTP struct{}
+type TOTP struct {
+	secret []byte
+}
 
 // Params can configure optional parameters for new TOTP generation.
 type Params struct{}
@@ -30,10 +41,32 @@ func (t *TOTP) MarshalBytes() ([]byte, error) { return nil, errUnimplemented }
 // with Google Authenticator.
 func (t *TOTP) MarshalString() string { return "" }
 
+func chunkString(str string) []string {
+	count := math.Ceil(float64(len(str)) / secretChunkSize)
+	chunks := make([]string, int(count))
+
+	for i := range chunks {
+		start := i * secretChunkSize
+		end := start + secretChunkSize
+
+		if end > len(str) {
+			end = len(str)
+		}
+
+		chunks[i] = str[start:end]
+	}
+
+	return chunks
+}
+
 // Secret outputs the secret in a base32-encoded format. This is useful for
-// copy/paste into authenticator apps when a QR code is not available. You must
-// use SHA-1 for this.
-func (t *TOTP) Secret() string { return "" }
+// copy/paste into authenticator apps when a QR code is not available. It is
+// highly recommended to use SHA-1 with this as many apps will default to SHA-1.
+func (t *TOTP) Secret() string {
+	encoded := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(t.secret)
+
+	return strings.Join(chunkString(encoded), "-")
+}
 
 // Generate generates a new TOTP.
 func (t *TOTP) Generate() (string, error) { return "", errUnimplemented }
