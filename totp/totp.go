@@ -26,6 +26,9 @@ var errUnimplemented = errors.New("unimplemented")
 // ErrInvalid is returned when a parameter fails validation.
 var ErrInvalid = errors.New("invalid")
 
+// ErrTokenFailed is returned when a TOTP fails verification.
+var ErrTokenFailed = errors.New("could not verify token")
+
 // HashAlgorithm defines which hashing algorithm to use when generating a TOTP.
 // The default for most apps is SHA-1.
 type HashAlgorithm int
@@ -212,5 +215,28 @@ func (t *TOTP) Generate() (string, error) {
 	return t.totp(time.Now())
 }
 
+func (t *TOTP) verify(cur time.Time, code string) error {
+	if len(code) != int(t.digits) {
+		return ErrTokenFailed
+	}
+
+	for i := 0; i <= int(t.lookback); i++ {
+		generated, err := t.totp(cur)
+		if err != nil {
+			return err
+		}
+
+		if generated == code {
+			return nil
+		}
+
+		cur = cur.Add(-t.period)
+	}
+
+	return ErrTokenFailed
+}
+
 // Verify verifies a given TOTP.
-func (t *TOTP) Verify(_ string) error { return errUnimplemented }
+func (t *TOTP) Verify(code string) error {
+	return t.verify(time.Now(), code)
+}

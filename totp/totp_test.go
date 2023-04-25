@@ -269,3 +269,58 @@ func TestTOTP(t *testing.T) {
 		})
 	}
 }
+
+func TestVerify(t *testing.T) {
+	otp := &TOTP{
+		secret:    []byte("12345678901234567890123456789012"),
+		algorithm: SHA256,
+		digits:    8,
+		period:    30 * time.Second,
+		lookback:  1,
+	}
+	now := time.Unix(1234567890, 0)
+
+	for _, test := range []struct {
+		name    string
+		time    time.Time
+		token   string
+		wantErr error
+	}{
+		{
+			name:    "short token",
+			time:    now,
+			token:   "123456",
+			wantErr: ErrTokenFailed,
+		},
+		{
+			name:    "good token",
+			time:    now,
+			token:   "91819424",
+			wantErr: nil,
+		},
+		{
+			name:    "1 period into the future",
+			time:    now.Add(30 * time.Second),
+			token:   "91819424",
+			wantErr: nil,
+		},
+		{
+			name:    "2 periods into the future",
+			time:    now.Add(60 * time.Second),
+			token:   "91819424",
+			wantErr: ErrTokenFailed,
+		},
+		{
+			name:    "1 period into the past",
+			time:    now.Add(-30 * time.Second),
+			token:   "91819424",
+			wantErr: ErrTokenFailed,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if err := otp.verify(test.time, test.token); !errors.Is(err, test.wantErr) {
+				t.Errorf("verify() err = %s, want %s", err, test.wantErr)
+			}
+		})
+	}
+}
