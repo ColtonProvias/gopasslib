@@ -3,6 +3,7 @@ linters:
   disable:
     - deadcode
     - exhaustivestruct
+    - exhaustruct
     - golint
     - ifshort
     - interfacer

@@ -59,7 +59,7 @@ func TestProtoSerialization(t *testing.T) {
 	}
 }
 
-func TestProtoDeserializationValidation(t *testing.T) {
+func TestProtoValidation(t *testing.T) { //nolint:funlen
 	for _, test := range []struct {
 		name    string
 		in      *pb.PasswordArgon2
@@ -67,90 +67,106 @@ func TestProtoDeserializationValidation(t *testing.T) {
 	}{
 		{
 			name: "default",
-			in: &pb.PasswordArgon2{Variant: pb.PasswordArgon2_VARIANT_ID,
+			in: &pb.PasswordArgon2{
+				Variant:   pb.PasswordArgon2_VARIANT_ID,
 				MemoryKib: 64 * 1024,
 				Time:      1,
 				Threads:   4,
 				Hash:      []byte("0123456789"),
 				Salt:      []byte("1234"),
-				Version:   0x13},
+				Version:   0x13,
+			},
 			wantErr: nil,
 		},
 		{
 			name: "bad variant",
-			in: &pb.PasswordArgon2{Variant: pb.PasswordArgon2_VARIANT_UNDEFINED,
+			in: &pb.PasswordArgon2{
+				Variant:   pb.PasswordArgon2_VARIANT_UNDEFINED,
 				MemoryKib: 64 * 1024,
 				Time:      1,
 				Threads:   4,
 				Hash:      []byte("0123456789"),
 				Salt:      []byte("1234"),
-				Version:   0x13},
+				Version:   0x13,
+			},
 			wantErr: argon2.ErrInvalid,
 		},
 		{
 			name: "bad memory",
-			in: &pb.PasswordArgon2{Variant: pb.PasswordArgon2_VARIANT_ID,
+			in: &pb.PasswordArgon2{
+				Variant:   pb.PasswordArgon2_VARIANT_ID,
 				MemoryKib: 0,
 				Time:      1,
 				Threads:   4,
 				Hash:      []byte("0123456789"),
 				Salt:      []byte("1234"),
-				Version:   0x13},
+				Version:   0x13,
+			},
 			wantErr: argon2.ErrInvalid,
 		},
 		{
 			name: "bad threads",
-			in: &pb.PasswordArgon2{Variant: pb.PasswordArgon2_VARIANT_ID,
+			in: &pb.PasswordArgon2{
+				Variant:   pb.PasswordArgon2_VARIANT_ID,
 				MemoryKib: 64 * 1024,
 				Time:      1,
 				Threads:   0,
 				Hash:      []byte("0123456789"),
 				Salt:      []byte("1234"),
-				Version:   0x13},
+				Version:   0x13,
+			},
 			wantErr: argon2.ErrInvalid,
 		},
 		{
 			name: "bad time",
-			in: &pb.PasswordArgon2{Variant: pb.PasswordArgon2_VARIANT_ID,
+			in: &pb.PasswordArgon2{
+				Variant:   pb.PasswordArgon2_VARIANT_ID,
 				MemoryKib: 64 * 1024,
 				Time:      0,
 				Threads:   4,
 				Hash:      []byte("0123456789"),
 				Salt:      []byte("1234"),
-				Version:   0x13},
+				Version:   0x13,
+			},
 			wantErr: argon2.ErrInvalid,
 		},
 		{
 			name: "bad hash",
-			in: &pb.PasswordArgon2{Variant: pb.PasswordArgon2_VARIANT_ID,
+			in: &pb.PasswordArgon2{
+				Variant:   pb.PasswordArgon2_VARIANT_ID,
 				MemoryKib: 64 * 1024,
 				Time:      1,
 				Threads:   4,
 				Hash:      nil,
 				Salt:      []byte("1234"),
-				Version:   0x13},
+				Version:   0x13,
+			},
 			wantErr: argon2.ErrInvalid,
 		},
 		{
 			name: "bad salt",
-			in: &pb.PasswordArgon2{Variant: pb.PasswordArgon2_VARIANT_ID,
+			in: &pb.PasswordArgon2{
+				Variant:   pb.PasswordArgon2_VARIANT_ID,
 				MemoryKib: 64 * 1024,
 				Time:      1,
 				Threads:   4,
 				Hash:      []byte("0123456789"),
 				Salt:      nil,
-				Version:   0x13},
+				Version:   0x13,
+			},
 			wantErr: argon2.ErrInvalid,
 		},
 		{
 			name: "bad version",
-			in: &pb.PasswordArgon2{Variant: pb.PasswordArgon2_VARIANT_ID,
+			in: &pb.PasswordArgon2{
+				Variant:   pb.PasswordArgon2_VARIANT_ID,
 				MemoryKib: 64 * 1024,
 				Time:      1,
 				Threads:   4,
 				Hash:      []byte("0123456789"),
 				Salt:      []byte("1234"),
-				Version:   0x12},
+				Version:   0x12,
+			},
 			wantErr: argon2.ErrInvalid,
 		},
 	} {

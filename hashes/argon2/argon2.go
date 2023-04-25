@@ -22,12 +22,21 @@ type Variant int
 
 // Argon2 variants. ID is the recommendation if uncertain of which to use.
 const (
-	VariantUndefined Variant = iota
+	variantUndefined Variant = iota
 	VariantI
 	VariantID
 )
 
 const version = 0x13
+
+const (
+	defaultVariant    = VariantID
+	defaultHashLength = 32
+	defaultSaltLength = 16
+	defaultTime       = 1
+	defaultMemory     = 64 * 1024
+	defaultThreads    = 4
+)
 
 func variantToProto(v Variant) pb.PasswordArgon2_Variant {
 	switch v {
@@ -47,19 +56,55 @@ func protoToVariant(enum pb.PasswordArgon2_Variant) Variant {
 	case pb.PasswordArgon2_VARIANT_ID:
 		return VariantID
 	default:
-		return VariantUndefined
+		return variantUndefined
 	}
 }
 
 // Params to be used during Argon2 hashing.
-type Params struct{}
+type Params struct {
+	HashLength uint
+	SaltLength uint
+	Time       uint
+	MemoryKiB  uint
+	Threads    uint
+	Variant    Variant
+}
 
-func (p *Params) validate() error {
-	return nil
+func (p *Params) applyDefaults() {
+	if p.Variant == variantUndefined {
+		p.Variant = defaultVariant
+	}
+
+	if p.HashLength == 0 {
+		p.HashLength = defaultHashLength
+	}
+
+	if p.SaltLength == 0 {
+		p.SaltLength = defaultSaltLength
+	}
+
+	if p.Time == 0 {
+		p.Time = defaultTime
+	}
+
+	if p.MemoryKiB == 0 {
+		p.MemoryKiB = defaultMemory
+	}
+
+	if p.Threads == 0 {
+		p.Threads = defaultThreads
+	}
 }
 
 // Hasher is used to work with Argon2 passwords.
-type Hasher struct{}
+type Hasher struct {
+	hashLength uint
+	saltLength uint
+	time       uint
+	memoryKiB  uint
+	threads    uint
+	variant    Variant
+}
 
 // HashedPassword contains a hashed Argon2 password.
 type HashedPassword struct {
@@ -73,12 +118,17 @@ type HashedPassword struct {
 }
 
 // New constructs a new Argon2 hasher instance.
-func New(p Params) (*Hasher, error) {
-	if err := p.validate(); err != nil {
-		return nil, err
-	}
+func New(params Params) (*Hasher, error) {
+	params.applyDefaults()
 
-	return &Hasher{}, nil
+	return &Hasher{
+		hashLength: params.HashLength,
+		saltLength: params.SaltLength,
+		time:       params.Time,
+		threads:    params.Threads,
+		memoryKiB:  params.MemoryKiB,
+		variant:    params.Variant,
+	}, nil
 }
 
 // Hash runs the Argon2 algorithm on the provided password.
@@ -113,7 +163,7 @@ func (h *Hasher) validateMessage(msg *pb.PasswordArgon2) error {
 		errs = append(errs, fmt.Errorf("memory must be greater than 0: %w", ErrInvalid))
 	}
 
-	if msg.Version != 0x13 {
+	if msg.Version != version {
 		errs = append(errs, fmt.Errorf("only version 0x13 is supported, got 0x%x: %w", msg.Version, ErrInvalid))
 	}
 
