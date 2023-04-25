@@ -324,3 +324,68 @@ func TestVerify(t *testing.T) {
 		})
 	}
 }
+
+func TestNew(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		params  Params
+		wantErr error
+	}{
+		{
+			name: "good",
+			params: Params{
+				Issuer:      "gopasslib",
+				AccountName: "user@example.com",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "bad digits",
+			params: Params{
+				Digits:      5,
+				Issuer:      "gopasslib",
+				AccountName: "user@example.com",
+			},
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "missing issuer",
+			params: Params{
+				AccountName: "user@example.com",
+			},
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "missing account",
+			params: Params{
+				Issuer: "gopasslib",
+			},
+			wantErr: ErrInvalid,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := New(test.params); !errors.Is(err, test.wantErr) {
+				t.Errorf("New() err = %s, want %s", err, test.wantErr)
+			}
+		})
+	}
+}
+
+func TestNewToVerify(t *testing.T) {
+	otp, err := New(Params{
+		Issuer:      "gopasslib",
+		AccountName: "user@example.com",
+	})
+	if err != nil {
+		t.Fatalf("New() failed: %s", err)
+	}
+
+	token, err := otp.Generate()
+	if err != nil {
+		t.Fatalf("Generate() failed: %s", err)
+	}
+
+	if err := otp.Verify(token); err != nil {
+		t.Errorf("Verify() failed: %s", err)
+	}
+}

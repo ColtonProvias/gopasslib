@@ -3,6 +3,7 @@ package totp
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha1" //nolint:gosec
 	"crypto/sha256"
 	"crypto/sha512"
@@ -11,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"io"
 	"math"
 	"net/url"
 	"sort"
@@ -19,7 +21,13 @@ import (
 	"time"
 )
 
-const secretChunkSize = 4
+const (
+	secretChunkSize     = 4
+	defaultSecretLength = 20
+	defaultDigits       = 6
+	defaultPeriod       = 30 * time.Second
+	defaultLookback     = 1
+)
 
 var errUnimplemented = errors.New("unimplemented")
 
@@ -72,10 +80,77 @@ type TOTP struct {
 }
 
 // Params can configure optional parameters for new TOTP generation.
-type Params struct{}
+type Params struct {
+	Issuer        string
+	AccountName   string
+	HashAlgorithm HashAlgorithm
+	SecretLength  uint
+	Digits        uint8
+	Period        time.Duration
+	Lookback      uint
+}
+
+func (p *Params) applyDefaults() {
+	if p.SecretLength == 0 {
+		p.SecretLength = defaultSecretLength
+	}
+
+	if p.Digits == 0 {
+		p.Digits = defaultDigits
+	}
+
+	if p.Period == 0 {
+		p.Period = defaultPeriod
+	}
+
+	if p.Lookback == 0 {
+		p.Lookback = defaultLookback
+	}
+}
+
+func (p *Params) validate() error {
+	var errs []error
+
+	if p.Digits < 6 || p.Digits > 9 {
+		errs = append(errs, fmt.Errorf("digits must be between 6 and 9 inclusive: %w", ErrInvalid))
+	}
+
+	if p.Issuer == "" {
+		errs = append(errs, fmt.Errorf("issuer must not be empty: %w", ErrInvalid))
+	}
+
+	if p.AccountName == "" {
+		errs = append(errs, fmt.Errorf("account name must not be empty: %w", ErrInvalid))
+	}
+
+	return errors.Join(errs...)
+}
 
 // New creates a new TOTP generator/verifier with a randomly generated secret.
-func New(_ Params) (*TOTP, error) { return nil, errUnimplemented }
+func New(params Params) (*TOTP, error) {
+	params.applyDefaults()
+
+	if err := params.validate(); err != nil {
+		return nil, err
+	}
+
+	secret := make([]byte, params.SecretLength)
+
+	_, err := io.ReadFull(rand.Reader, secret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate secret: %w", err)
+	}
+
+	return &TOTP{
+		algorithm:   params.HashAlgorithm,
+		secret:      secret,
+		issuer:      params.Issuer,
+		accountName: params.AccountName,
+		digits:      params.Digits,
+		period:      params.Period,
+		lookback:    params.Lookback,
+	}, nil
+}
 
 // UnmarshalBytes loads a proto-encoded TOTP message. This should be used when
 // loading TOTP secrets from storage.
