@@ -429,7 +429,7 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
-func TestUnmarshal(t *testing.T) {
+func TestUnmarshal(t *testing.T) { //nolint:funlen
 	for _, test := range []struct {
 		name    string
 		in      proto.Message
