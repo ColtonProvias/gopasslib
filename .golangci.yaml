@@ -11,6 +11,11 @@ linters:
     - scopelint
     - structcheck
     - varcheck
+linters-settings:
+  exhaustive:
+    default-signifies-exhaustive: true
+  paralleltest:
+    ignore-missing: true
 issues:
   exclude-use-default: false
 output:
