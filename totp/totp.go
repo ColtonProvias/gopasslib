@@ -5,18 +5,43 @@ import (
 	"encoding/base32"
 	"errors"
 	"math"
+	"net/url"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const secretChunkSize = 4
 
 var errUnimplemented = errors.New("unimplemented")
 
-var ErrUnsupportedAlgorithm = errors.New("unsupported algorithm")
+// HashAlgorithm defines which hashing algorithm to use when generating a TOTP.
+// The default for most apps is SHA-1.
+type HashAlgorithm int
+
+// Hashing algorithms. The default for most apps is SHA-1.
+const (
+	SHA1 HashAlgorithm = iota
+	SHA256
+	SHA512
+)
+
+// TODO: Replace with stringer.
+var algToString = map[HashAlgorithm]string{ //nolint:gochecknoglobals
+	SHA1:   "SHA1",
+	SHA256: "SHA256",
+	SHA512: "SHA512",
+}
 
 // TOTP is used to generate and verify Timed One Time Password tokens.
 type TOTP struct {
-	secret []byte
+	secret      []byte
+	algorithm   HashAlgorithm
+	issuer      string
+	accountName string
+	digits      uint8
+	period      time.Duration
 }
 
 // Params can configure optional parameters for new TOTP generation.
@@ -29,17 +54,43 @@ func New(_ Params) (*TOTP, error) { return nil, errUnimplemented }
 // loading TOTP secrets from storage.
 func UnmarshalBytes(_ []byte) (*TOTP, error) { return nil, errUnimplemented }
 
-// UnmarshalString loads a URI-encoded TOTP message. This should be used when
-// loading TOTP secrets from a QR Code.
-func UnmarshalString(_ string) (*TOTP, error) { return nil, errUnimplemented }
+// FromString loads a URI-encoded TOTP message. This should be used when loading
+// TOTP secrets from a QR Code.
+func FromString(_ string) (*TOTP, error) { return nil, errUnimplemented }
 
 // MarshalBytes serializes the TOTP object in a protobuf format. This should be
 // used for storing a TOTP secret.
 func (t *TOTP) MarshalBytes() ([]byte, error) { return nil, errUnimplemented }
 
-// MarshalString serializes the TOTP object in a URI format that is compatible
-// with Google Authenticator.
-func (t *TOTP) MarshalString() string { return "" }
+func encodeURIQuery(values map[string]string) string {
+	params := make([]string, 0, len(values))
+	for k, v := range values {
+		params = append(params, url.PathEscape(k)+"="+url.PathEscape(v))
+	}
+
+	sort.Strings(params)
+
+	return strings.Join(params, "&")
+}
+
+// String serializes the TOTP object in a URI format that is compatible with
+// Google Authenticator.
+func (t *TOTP) String() string {
+	uri := url.URL{
+		Scheme: "otpauth",
+		Host:   "totp",
+		Path:   "/" + t.issuer + ":" + t.accountName,
+		RawQuery: encodeURIQuery(map[string]string{
+			"secret":    base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(t.secret),
+			"issuer":    t.issuer,
+			"period":    strconv.Itoa(int(t.period.Seconds())),
+			"algorithm": algToString[t.algorithm],
+			"digits":    strconv.Itoa(int(t.digits)),
+		}),
+	}
+
+	return uri.String()
+}
 
 func chunkString(str string) []string {
 	count := math.Ceil(float64(len(str)) / secretChunkSize)
