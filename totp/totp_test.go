@@ -7,7 +7,10 @@ import (
 	"testing"
 	"time"
 
+	pb "github.com/ColtonProvias/gopasslib/proto"
 	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestSecret(t *testing.T) {
@@ -387,5 +390,41 @@ func TestNewToVerify(t *testing.T) {
 
 	if err := otp.Verify(token); err != nil {
 		t.Errorf("Verify() failed: %s", err)
+	}
+}
+
+func TestMarshal(t *testing.T) {
+	want := &pb.TOTP{
+		AccountName:     "user@example.com",
+		Digits:          6,
+		HashAlgorithm:   pb.TOTP_HASH_ALGORITHM_SHA_512,
+		Issuer:          "gopasslib",
+		LookbackPeriods: 1,
+		PeriodSeconds:   30,
+		Secret:          []byte("1234"),
+	}
+	otp := &TOTP{
+		secret:      []byte("1234"),
+		algorithm:   SHA512,
+		issuer:      "gopasslib",
+		accountName: "user@example.com",
+		digits:      6,
+		period:      30 * time.Second,
+		lookback:    1,
+	}
+
+	encoded, err := otp.Marshal()
+	if err != nil {
+		t.Fatalf("Marshal() failed: %s", err)
+	}
+
+	got := &pb.TOTP{}
+
+	if err := proto.Unmarshal(encoded, got); err != nil {
+		t.Fatalf("proto.Unmarshal() failed: %s", err)
+	}
+
+	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
+		t.Errorf("Marshal() mismatch (-want +got):\n%s", diff)
 	}
 }

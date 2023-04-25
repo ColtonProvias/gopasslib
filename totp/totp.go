@@ -19,6 +19,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	pb "github.com/ColtonProvias/gopasslib/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -60,6 +63,12 @@ var stringToAlg = map[string]HashAlgorithm{ //nolint:gochecknoglobals
 	"SHA1":   SHA1,
 	"SHA256": SHA256,
 	"SHA512": SHA512,
+}
+
+var algToProto = map[HashAlgorithm]pb.TOTP_HashAlgorithm{ //nolint:gochecknoglobals
+	SHA1:   pb.TOTP_HASH_ALGORITHM_SHA_1,
+	SHA256: pb.TOTP_HASH_ALGORITHM_SHA_256,
+	SHA512: pb.TOTP_HASH_ALGORITHM_SHA_512,
 }
 
 var algToHash = map[HashAlgorithm]func() hash.Hash{ //nolint:gochecknoglobals
@@ -152,9 +161,9 @@ func New(params Params) (*TOTP, error) {
 	}, nil
 }
 
-// UnmarshalBytes loads a proto-encoded TOTP message. This should be used when
+// Unmarshal loads a proto-encoded TOTP message. This should be used when
 // loading TOTP secrets from storage.
-func UnmarshalBytes(_ []byte) (*TOTP, error) { return nil, errUnimplemented }
+func Unmarshal(_ []byte) (*TOTP, error) { return nil, errUnimplemented }
 
 // FromString loads a URI-encoded TOTP message. This should be used when loading
 // TOTP secrets from a QR Code.
@@ -204,9 +213,26 @@ func FromString(uri string) (*TOTP, error) {
 	}, nil
 }
 
-// MarshalBytes serializes the TOTP object in a protobuf format. This should be
-// used for storing a TOTP secret.
-func (t *TOTP) MarshalBytes() ([]byte, error) { return nil, errUnimplemented }
+// Marshal serializes the TOTP object in a protobuf format. This should be used
+// for storing a TOTP secret.
+func (t *TOTP) Marshal() ([]byte, error) {
+	msg := &pb.TOTP{
+		Secret:          t.secret,
+		HashAlgorithm:   algToProto[t.algorithm],
+		Issuer:          t.issuer,
+		AccountName:     t.accountName,
+		Digits:          uint32(t.digits),
+		PeriodSeconds:   uint32(t.period.Seconds()),
+		LookbackPeriods: uint32(t.lookback),
+	}
+
+	encoded, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal: %w", err)
+	}
+
+	return encoded, nil
+}
 
 func encodeURIQuery(values map[string]string) string {
 	params := make([]string, 0, len(values))
