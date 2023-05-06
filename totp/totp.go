@@ -49,14 +49,12 @@ const (
 	SHA512
 )
 
-// TODO: Replace with stringer.
 var algToString = map[HashAlgorithm]string{ //nolint:gochecknoglobals
 	SHA1:   "SHA1",
 	SHA256: "SHA256",
 	SHA512: "SHA512",
 }
 
-// TODO: Replace with stringer.
 var stringToAlg = map[string]HashAlgorithm{ //nolint:gochecknoglobals
 	"SHA1":   SHA1,
 	"SHA256": SHA256,
