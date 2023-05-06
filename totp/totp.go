@@ -124,8 +124,8 @@ func (p *Params) applyDefaults() {
 func (p *Params) validate() error {
 	var errs []error
 
-	if p.Digits < 6 || p.Digits > 9 {
-		errs = append(errs, fmt.Errorf("digits must be between 6 and 9 inclusive: %w", ErrInvalid))
+	if p.Digits < 6 || p.Digits > 10 {
+		errs = append(errs, fmt.Errorf("digits must be between 6 and 10 inclusive: %w", ErrInvalid))
 	}
 
 	if p.Issuer == "" {
@@ -188,8 +188,8 @@ func validateProto(msg *pb.TOTP) error {
 		errs = append(errs, fmt.Errorf("period must be greater than 0: %w", ErrInvalid))
 	}
 
-	if msg.Digits < 6 || msg.Digits > 9 {
-		errs = append(errs, fmt.Errorf("digits must be between 6 to 9 inclusive: %w", ErrInvalid))
+	if msg.Digits < 6 || msg.Digits > 10 {
+		errs = append(errs, fmt.Errorf("digits must be between 6 to 10 inclusive: %w", ErrInvalid))
 	}
 
 	return errors.Join(errs...)
@@ -237,8 +237,8 @@ func FromString(uri string) (*TOTP, error) {
 	query := parsed.Query()
 
 	digits, err := strconv.Atoi(query.Get("digits"))
-	if err != nil || digits < 6 || digits > 9 {
-		return nil, fmt.Errorf("digits must be a number between 6 and 9: %w", ErrInvalid)
+	if err != nil || digits < 6 || digits > 10 {
+		return nil, fmt.Errorf("digits must be a number between 6 and 10: %w", ErrInvalid)
 	}
 
 	period, err := strconv.Atoi(query.Get("period"))
