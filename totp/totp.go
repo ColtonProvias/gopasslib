@@ -133,6 +133,13 @@ func (p *Params) validate() error {
 	if p.AccountName == "" {
 		errs = append(errs, fmt.Errorf("account name must not be empty: %w", ErrInvalid))
 	}
+	if _, ok := algToHash[p.HashAlgorithm]; !ok {
+		errs = append(errs, fmt.Errorf("unsupported hash algorithm: %w", ErrInvalid))
+	}
+
+	if p.Period < time.Second || p.Period%time.Second != 0 {
+		errs = append(errs, fmt.Errorf("period must be a positive whole number of seconds: %w", ErrInvalid))
+	}
 
 	return errors.Join(errs...)
 }

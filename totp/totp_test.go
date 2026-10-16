@@ -365,6 +365,69 @@ func TestNew(t *testing.T) {
 			},
 			wantErr: ErrInvalid,
 		},
+		{
+			name: "invalid hash algorithm",
+			params: Params{
+				Issuer:        "gopasslib",
+				AccountName:   "user@example.com",
+				HashAlgorithm: HashAlgorithm(99),
+			},
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "subsecond period",
+			params: Params{
+				Issuer:      "gopasslib",
+				AccountName: "user@example.com",
+				Period:      500 * time.Millisecond,
+			},
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "negative period",
+			params: Params{
+				Issuer:      "gopasslib",
+				AccountName: "user@example.com",
+				Period:      -30 * time.Second,
+			},
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "fractional second period",
+			params: Params{
+				Issuer:      "gopasslib",
+				AccountName: "user@example.com",
+				Period:      1500 * time.Millisecond,
+			},
+			wantErr: ErrInvalid,
+		},
+		{
+			name: "valid SHA256 algorithm",
+			params: Params{
+				Issuer:        "gopasslib",
+				AccountName:   "user@example.com",
+				HashAlgorithm: SHA256,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "valid SHA512 algorithm",
+			params: Params{
+				Issuer:        "gopasslib",
+				AccountName:   "user@example.com",
+				HashAlgorithm: SHA512,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "valid custom period",
+			params: Params{
+				Issuer:      "gopasslib",
+				AccountName: "user@example.com",
+				Period:      60 * time.Second,
+			},
+			wantErr: nil,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if _, err := New(test.params); !errors.Is(err, test.wantErr) {
