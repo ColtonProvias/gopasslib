@@ -20,10 +20,12 @@ var ErrInvalid = errors.New("invalid")
 // Variant defines the argon2 variant to use. The default should be VariantID.
 type Variant int
 
-// Argon2 variants. ID is the recommendation if uncertain of which to use.
+// Argon2 variants. VariantID is recommended if uncertain of which to use.
 const (
 	variantUndefined Variant = iota
+	// VariantI specifies the Argon2i algorithm variant.
 	VariantI
+	// VariantID specifies the Argon2id algorithm variant.
 	VariantID
 )
 
@@ -60,7 +62,7 @@ func protoToVariant(enum pb.PasswordArgon2_Variant) Variant {
 	}
 }
 
-// Params to be used during Argon2 hashing.
+// Params configures parameters to be used during Argon2 hashing.
 type Params struct {
 	HashLength uint
 	SaltLength uint
@@ -139,32 +141,32 @@ func (h *Hasher) Hash(_ context.Context, _ []byte) (*HashedPassword, error) {
 func (h *Hasher) validateMessage(msg *pb.PasswordArgon2) error {
 	var errs []error
 
-	if msg.Variant == pb.PasswordArgon2_VARIANT_UNDEFINED {
+	if msg.GetVariant() == pb.PasswordArgon2_VARIANT_UNDEFINED {
 		errs = append(errs, fmt.Errorf("unsupported variant: %w", ErrInvalid))
 	}
 
-	if len(msg.Hash) == 0 {
+	if len(msg.GetHash()) == 0 {
 		errs = append(errs, fmt.Errorf("empty hash: %w", ErrInvalid))
 	}
 
-	if len(msg.Salt) == 0 {
+	if len(msg.GetSalt()) == 0 {
 		errs = append(errs, fmt.Errorf("empty salt: %w", ErrInvalid))
 	}
 
-	if msg.Threads == 0 {
+	if msg.GetThreads() == 0 {
 		errs = append(errs, fmt.Errorf("threads must be greater than 0: %w", ErrInvalid))
 	}
 
-	if msg.Time == 0 {
+	if msg.GetTime() == 0 {
 		errs = append(errs, fmt.Errorf("time must be greater than 0: %w", ErrInvalid))
 	}
 
-	if msg.MemoryKib == 0 {
+	if msg.GetMemoryKib() == 0 {
 		errs = append(errs, fmt.Errorf("memory must be greater than 0: %w", ErrInvalid))
 	}
 
-	if msg.Version != version {
-		errs = append(errs, fmt.Errorf("only version 0x13 is supported, got 0x%x: %w", msg.Version, ErrInvalid))
+	if msg.GetVersion() != version {
+		errs = append(errs, fmt.Errorf("only version 0x13 is supported, got 0x%x: %w", msg.GetVersion(), ErrInvalid))
 	}
 
 	return errors.Join(errs...)
@@ -178,12 +180,12 @@ func (h *Hasher) FromMessage(msg *pb.PasswordArgon2) (*HashedPassword, error) {
 
 	hashed := &HashedPassword{
 		hasher:  h,
-		variant: protoToVariant(msg.Variant),
-		hash:    msg.Hash,
-		salt:    msg.Salt,
-		memory:  msg.MemoryKib,
-		time:    msg.Time,
-		threads: msg.Threads,
+		variant: protoToVariant(msg.GetVariant()),
+		hash:    msg.GetHash(),
+		salt:    msg.GetSalt(),
+		memory:  msg.GetMemoryKib(),
+		time:    msg.GetTime(),
+		threads: msg.GetThreads(),
 	}
 
 	return hashed, nil
