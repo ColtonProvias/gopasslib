@@ -1,37 +1,39 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
 linters:
-  enable-all: true
+  default: all
   disable:
-    - deadcode
-    - exhaustivestruct
+    - depguard
     - exhaustruct
-    - golint
-    - ifshort
-    - interfacer
-    - maligned
-    - nosnakecase
-    - scopelint
-    - structcheck
+    - exhaustruct_v5
+    - funcorder
+    - funlen
+    - goconst
+    - godox
+    - gomodguard
+    - ireturn
+    - lll
+    - mnd
+    - nlreturn
+    - noinlineerr
+    - nonamedreturns
     - testpackage
-    - varcheck
-linters-settings:
-  cyclop:
-    skip-tests: false
-    max-complexity: 15
-    package-average: 0
-  exhaustive:
-    default-signifies-exhaustive: true
-  paralleltest:
-    ignore-missing: true
-  varnamelen:
-    max-distance: 10
-    min-name-length: 3
-    check-receiver: false
-    check-return: false
-    check-type-param: false
-    ignore-type-assert-ok: false
-    ignore-map-index-ok: false
-    ignore-chan-recv-ok: false
-issues:
-  exclude-use-default: false
-output:
-  sort-results: true
+    - varnamelen
+    - wsl
+    - wsl_v5
+  settings:
+    cyclop:
+      max-complexity: 15
+      package-average: 0
+    exhaustive:
+      default-signifies-exhaustive: true
+    gosec:
+      excludes:
+        - G115
+    paralleltest:
+      ignore-missing: true
