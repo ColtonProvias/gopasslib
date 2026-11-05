@@ -60,7 +60,7 @@ func TestString(t *testing.T) {
 				period:      30 * time.Second,
 				algorithm:   SHA1,
 			},
-			want: "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA1&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			want: "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA1&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 		},
 		{
 			name: "SHA256",
@@ -72,10 +72,10 @@ func TestString(t *testing.T) {
 				period:      30 * time.Second,
 				algorithm:   SHA256,
 			},
-			want: "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			want: "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 		},
 		{
-			name: "SHA256",
+			name: "SHA512",
 			in: &TOTP{
 				issuer:      "go pass lib",
 				accountName: "user@example.com",
@@ -84,7 +84,7 @@ func TestString(t *testing.T) {
 				period:      30 * time.Second,
 				algorithm:   SHA512,
 			},
-			want: "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA512&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			want: "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA512&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestFromString(t *testing.T) { //nolint:funlen
+func TestFromString(t *testing.T) {
 	for _, test := range []struct {
 		name    string
 		in      string
@@ -104,7 +104,7 @@ func TestFromString(t *testing.T) { //nolint:funlen
 	}{
 		{
 			name: "full featured with SHA256",
-			in:   "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			in:   "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 			want: &TOTP{
 				issuer:      "go pass lib",
 				accountName: "user@example.com",
@@ -124,55 +124,55 @@ func TestFromString(t *testing.T) { //nolint:funlen
 		},
 		{
 			name:    "No split in path",
-			in:      "otpauth://totp/go%20pass%20lib/user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib/user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
 		{
 			name:    "missing digits",
-			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
 		{
 			name:    "digits out of range",
-			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=-6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=-6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
 		{
 			name:    "missing period",
-			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&secret=GAYTEMZUGU3DOOBZ",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
 		{
 			name:    "period out of range",
-			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=-30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=-30&secret=GAYTEMZUGU3DOOBZ",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
 		{
 			name:    "missing algorithm",
-			in:      "otpauth://totp/go%20pass%20lib:user@example.com?digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib:user@example.com?digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
 		{
 			name:    "bad algorithm",
-			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=plaintext&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=plaintext&digits=6&issuer=go%20pass%20lib&period=30&secret=GAYTEMZUGU3DOOBZ",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
 		{
 			name:    "missing secret",
-			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
 		{
 			name:    "poorly encoded secret",
-			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30&secret=1234567890abcdef", //nolint:lll
+			in:      "otpauth://totp/go%20pass%20lib:user@example.com?algorithm=SHA256&digits=6&issuer=go%20pass%20lib&period=30&secret=1234567890abcdef",
 			want:    nil,
 			wantErr: ErrInvalid,
 		},
@@ -180,7 +180,7 @@ func TestFromString(t *testing.T) { //nolint:funlen
 		t.Run(test.name, func(t *testing.T) {
 			got, err := FromString(test.in)
 			if !errors.Is(err, test.wantErr) {
-				t.Errorf("FromString(%q) err = %s, want %s", test.in, err, test.wantErr)
+				t.Errorf("FromString(%q) err = %v, want %v", test.in, err, test.wantErr)
 			}
 			if diff := cmp.Diff(test.want, got, cmp.AllowUnexported(TOTP{})); diff != "" {
 				t.Errorf("FromString() mismatch (-want +got):\n%s", diff)
@@ -190,7 +190,7 @@ func TestFromString(t *testing.T) { //nolint:funlen
 }
 
 func TestHOTP(t *testing.T) {
-	for i, want := range []string{ //nolint:varnamelen
+	for i, want := range []string{
 		"755224",
 		"287082",
 		"359152",
@@ -210,7 +210,7 @@ func TestHOTP(t *testing.T) {
 			}
 			got, err := otp.hotp(uint64(i))
 			if err != nil {
-				t.Errorf("hotp(%d) failed: %s", i, err)
+				t.Errorf("hotp(%d) failed: %v", i, err)
 			}
 			if got != want {
 				t.Errorf("hotp(%d) = %s, want %s", i, got, want)
@@ -264,7 +264,7 @@ func TestTOTP(t *testing.T) {
 			ts := time.Unix(int64(test.unixTime), 0)
 			got, err := otp.totp(ts)
 			if err != nil {
-				t.Errorf("totp(%s) failed: %s", ts, err)
+				t.Errorf("totp(%s) failed: %v", ts, err)
 			}
 			if got != test.want {
 				t.Errorf("totp(%s) = %s, want %s", ts, got, test.want)
@@ -322,7 +322,7 @@ func TestVerify(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if err := otp.verify(test.time, test.token); !errors.Is(err, test.wantErr) {
-				t.Errorf("verify() err = %s, want %s", err, test.wantErr)
+				t.Errorf("verify() err = %v, want %v", err, test.wantErr)
 			}
 		})
 	}
@@ -368,7 +368,7 @@ func TestNew(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if _, err := New(test.params); !errors.Is(err, test.wantErr) {
-				t.Errorf("New() err = %s, want %s", err, test.wantErr)
+				t.Errorf("New() err = %v, want %v", err, test.wantErr)
 			}
 		})
 	}
@@ -380,16 +380,16 @@ func TestNewToVerify(t *testing.T) {
 		AccountName: "user@example.com",
 	})
 	if err != nil {
-		t.Fatalf("New() failed: %s", err)
+		t.Fatalf("New() failed: %v", err)
 	}
 
 	token, err := otp.Generate()
 	if err != nil {
-		t.Fatalf("Generate() failed: %s", err)
+		t.Fatalf("Generate() failed: %v", err)
 	}
 
 	if err := otp.Verify(token); err != nil {
-		t.Errorf("Verify() failed: %s", err)
+		t.Errorf("Verify() failed: %v", err)
 	}
 }
 
@@ -415,13 +415,13 @@ func TestMarshal(t *testing.T) {
 
 	encoded, err := otp.Marshal()
 	if err != nil {
-		t.Fatalf("Marshal() failed: %s", err)
+		t.Fatalf("Marshal() failed: %v", err)
 	}
 
 	got := &pb.TOTP{}
 
 	if err := proto.Unmarshal(encoded, got); err != nil {
-		t.Fatalf("proto.Unmarshal() failed: %s", err)
+		t.Fatalf("proto.Unmarshal() failed: %v", err)
 	}
 
 	if diff := cmp.Diff(want, got, protocmp.Transform()); diff != "" {
@@ -429,7 +429,7 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
-func TestUnmarshal(t *testing.T) { //nolint:funlen
+func TestUnmarshal(t *testing.T) {
 	for _, test := range []struct {
 		name    string
 		in      proto.Message
@@ -524,7 +524,7 @@ func TestUnmarshal(t *testing.T) { //nolint:funlen
 			wantErr: ErrInvalid,
 		},
 		{
-			name: "mmissing digits",
+			name: "missing digits",
 			in: &pb.TOTP{
 				Secret:          []byte("1234567890"),
 				Issuer:          "gopasslib",
@@ -540,11 +540,11 @@ func TestUnmarshal(t *testing.T) { //nolint:funlen
 		t.Run(test.name, func(t *testing.T) {
 			encoded, err := proto.Marshal(test.in)
 			if err != nil {
-				t.Fatalf("proto.Marshal() failed: %s", err)
+				t.Fatalf("proto.Marshal() failed: %v", err)
 			}
 			got, gotErr := Unmarshal(encoded)
 			if !errors.Is(gotErr, test.wantErr) {
-				t.Errorf("Unmarshal() err = %s, want %s", gotErr, test.wantErr)
+				t.Errorf("Unmarshal() err = %v, want %v", gotErr, test.wantErr)
 			}
 			if diff := cmp.Diff(test.want, got, cmp.AllowUnexported(TOTP{})); diff != "" {
 				t.Errorf("Unmarshal() mismatch (-want +got):\n%s", diff)

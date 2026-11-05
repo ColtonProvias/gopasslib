@@ -43,12 +43,12 @@ func TestProtoSerialization(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			h, err := argon2.New(argon2.Params{})
 			if err != nil {
-				t.Fatalf("argon2.New() failed: %s", err)
+				t.Fatalf("argon2.New() failed: %v", err)
 			}
 
 			loaded, err := h.FromMessage(test.msg)
 			if err != nil {
-				t.Fatalf("FromMessage() failed: %s", err)
+				t.Fatalf("FromMessage() failed: %v", err)
 			}
 
 			got := loaded.ProtoMessage()
@@ -59,7 +59,7 @@ func TestProtoSerialization(t *testing.T) {
 	}
 }
 
-func TestProtoValidation(t *testing.T) { //nolint:funlen
+func TestProtoValidation(t *testing.T) {
 	for _, test := range []struct {
 		name    string
 		in      *pb.PasswordArgon2
@@ -173,11 +173,11 @@ func TestProtoValidation(t *testing.T) { //nolint:funlen
 		t.Run(test.name, func(t *testing.T) {
 			h, err := argon2.New(argon2.Params{})
 			if err != nil {
-				t.Fatalf("argon2.New() failed: %s", err)
+				t.Fatalf("argon2.New() failed: %v", err)
 			}
 			_, err = h.FromMessage(test.in)
 			if !errors.Is(err, test.wantErr) {
-				t.Errorf("h.FromMessage() err = %s, want %s", err, test.wantErr)
+				t.Errorf("h.FromMessage() err = %v, want %v", err, test.wantErr)
 			}
 		})
 	}

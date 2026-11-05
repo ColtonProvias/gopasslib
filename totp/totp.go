@@ -44,39 +44,77 @@ type HashAlgorithm int
 
 // Hashing algorithms. The default for most apps is SHA-1.
 const (
+	// SHA1 specifies the SHA-1 hashing algorithm.
 	SHA1 HashAlgorithm = iota
+	// SHA256 specifies the SHA-256 hashing algorithm.
 	SHA256
+	// SHA512 specifies the SHA-512 hashing algorithm.
 	SHA512
 )
 
-var algToString = map[HashAlgorithm]string{ //nolint:gochecknoglobals
-	SHA1:   "SHA1",
-	SHA256: "SHA256",
-	SHA512: "SHA512",
+func algToString(alg HashAlgorithm) string {
+	switch alg {
+	case SHA1:
+		return "SHA1"
+	case SHA256:
+		return "SHA256"
+	case SHA512:
+		return "SHA512"
+	default:
+		return ""
+	}
 }
 
-var stringToAlg = map[string]HashAlgorithm{ //nolint:gochecknoglobals
-	"SHA1":   SHA1,
-	"SHA256": SHA256,
-	"SHA512": SHA512,
+func stringToAlg(s string) (HashAlgorithm, bool) {
+	switch s {
+	case "SHA1":
+		return SHA1, true
+	case "SHA256":
+		return SHA256, true
+	case "SHA512":
+		return SHA512, true
+	default:
+		return 0, false
+	}
 }
 
-var algToProto = map[HashAlgorithm]pb.TOTP_HashAlgorithm{ //nolint:gochecknoglobals
-	SHA1:   pb.TOTP_HASH_ALGORITHM_SHA_1,
-	SHA256: pb.TOTP_HASH_ALGORITHM_SHA_256,
-	SHA512: pb.TOTP_HASH_ALGORITHM_SHA_512,
+func algToProto(alg HashAlgorithm) pb.TOTP_HashAlgorithm {
+	switch alg {
+	case SHA1:
+		return pb.TOTP_HASH_ALGORITHM_SHA_1
+	case SHA256:
+		return pb.TOTP_HASH_ALGORITHM_SHA_256
+	case SHA512:
+		return pb.TOTP_HASH_ALGORITHM_SHA_512
+	default:
+		return pb.TOTP_HASH_ALGORITHM_UNDEFINED
+	}
 }
 
-var protoToAlg = map[pb.TOTP_HashAlgorithm]HashAlgorithm{ //nolint:gochecknoglobals
-	pb.TOTP_HASH_ALGORITHM_SHA_1:   SHA1,
-	pb.TOTP_HASH_ALGORITHM_SHA_256: SHA256,
-	pb.TOTP_HASH_ALGORITHM_SHA_512: SHA512,
+func protoToAlg(enum pb.TOTP_HashAlgorithm) (HashAlgorithm, bool) {
+	switch enum {
+	case pb.TOTP_HASH_ALGORITHM_SHA_1:
+		return SHA1, true
+	case pb.TOTP_HASH_ALGORITHM_SHA_256:
+		return SHA256, true
+	case pb.TOTP_HASH_ALGORITHM_SHA_512:
+		return SHA512, true
+	default:
+		return 0, false
+	}
 }
 
-var algToHash = map[HashAlgorithm]func() hash.Hash{ //nolint:gochecknoglobals
-	SHA1:   sha1.New,
-	SHA256: sha256.New,
-	SHA512: sha512.New,
+func algToHash(alg HashAlgorithm) func() hash.Hash {
+	switch alg {
+	case SHA1:
+		return sha1.New
+	case SHA256:
+		return sha256.New
+	case SHA512:
+		return sha512.New
+	default:
+		return sha1.New
+	}
 }
 
 // TOTP is used to generate and verify Timed One Time Password tokens.
@@ -166,27 +204,27 @@ func New(params Params) (*TOTP, error) {
 func validateProto(msg *pb.TOTP) error {
 	var errs []error
 
-	if _, ok := protoToAlg[msg.HashAlgorithm]; !ok {
+	if _, ok := protoToAlg(msg.GetHashAlgorithm()); !ok {
 		errs = append(errs, fmt.Errorf("unknown hash algorithm: %w", ErrInvalid))
 	}
 
-	if len(msg.Secret) == 0 {
+	if len(msg.GetSecret()) == 0 {
 		errs = append(errs, fmt.Errorf("secret must not be empty: %w", ErrInvalid))
 	}
 
-	if msg.Issuer == "" {
+	if msg.GetIssuer() == "" {
 		errs = append(errs, fmt.Errorf("issuer must not be empty: %w", ErrInvalid))
 	}
 
-	if msg.AccountName == "" {
+	if msg.GetAccountName() == "" {
 		errs = append(errs, fmt.Errorf("account name must not be empty: %w", ErrInvalid))
 	}
 
-	if msg.PeriodSeconds == 0 {
+	if msg.GetPeriodSeconds() == 0 {
 		errs = append(errs, fmt.Errorf("period must be greater than 0: %w", ErrInvalid))
 	}
 
-	if msg.Digits < 6 || msg.Digits > 10 {
+	if msg.GetDigits() < 6 || msg.GetDigits() > 10 {
 		errs = append(errs, fmt.Errorf("digits must be between 6 to 10 inclusive: %w", ErrInvalid))
 	}
 
@@ -206,14 +244,16 @@ func Unmarshal(encoded []byte) (*TOTP, error) {
 		return nil, err
 	}
 
+	alg, _ := protoToAlg(msg.GetHashAlgorithm())
+
 	return &TOTP{
-		secret:      msg.Secret,
-		algorithm:   protoToAlg[msg.HashAlgorithm],
-		issuer:      msg.Issuer,
-		accountName: msg.AccountName,
-		period:      time.Duration(msg.PeriodSeconds) * time.Second,
-		lookback:    uint(msg.LookbackPeriods),
-		digits:      uint8(msg.Digits),
+		secret:      msg.GetSecret(),
+		algorithm:   alg,
+		issuer:      msg.GetIssuer(),
+		accountName: msg.GetAccountName(),
+		period:      time.Duration(msg.GetPeriodSeconds()) * time.Second,
+		lookback:    uint(msg.GetLookbackPeriods()),
+		digits:      uint8(msg.GetDigits()),
 	}, nil
 }
 
@@ -226,7 +266,7 @@ func FromString(uri string) (*TOTP, error) {
 	}
 
 	pathParts := strings.Split(parsed.Path, ":")
-	if len(pathParts) != 2 { //nolint:gomnd
+	if len(pathParts) != 2 {
 		return nil, fmt.Errorf("invalid path %q: %w", parsed.Path, ErrInvalid)
 	}
 
@@ -244,7 +284,7 @@ func FromString(uri string) (*TOTP, error) {
 		return nil, fmt.Errorf("period must be a positive number: %w", ErrInvalid)
 	}
 
-	alg, ok := stringToAlg[query.Get("algorithm")]
+	alg, ok := stringToAlg(query.Get("algorithm"))
 	if !ok {
 		return nil, fmt.Errorf("unknown algorithm %q: %w", query.Get("algorithm"), ErrInvalid)
 	}
@@ -270,7 +310,7 @@ func FromString(uri string) (*TOTP, error) {
 func (t *TOTP) Marshal() ([]byte, error) {
 	msg := &pb.TOTP{
 		Secret:          t.secret,
-		HashAlgorithm:   algToProto[t.algorithm],
+		HashAlgorithm:   algToProto(t.algorithm),
 		Issuer:          t.issuer,
 		AccountName:     t.accountName,
 		Digits:          uint32(t.digits),
@@ -308,7 +348,7 @@ func (t *TOTP) String() string {
 			"secret":    base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(t.secret),
 			"issuer":    t.issuer,
 			"period":    strconv.Itoa(int(t.period.Seconds())),
-			"algorithm": algToString[t.algorithm],
+			"algorithm": algToString(t.algorithm),
 			"digits":    strconv.Itoa(int(t.digits)),
 		}),
 	}
@@ -322,11 +362,7 @@ func chunkString(str string) []string {
 
 	for i := range chunks {
 		start := i * secretChunkSize
-		end := start + secretChunkSize
-
-		if end > len(str) {
-			end = len(str)
-		}
+		end := min(start+secretChunkSize, len(str))
 
 		chunks[i] = str[start:end]
 	}
@@ -344,7 +380,7 @@ func (t *TOTP) Secret() string {
 }
 
 func (t *TOTP) hotp(counter uint64) (string, error) {
-	hf := algToHash[t.algorithm]
+	hf := algToHash(t.algorithm)
 	h := hmac.New(hf, t.secret)
 
 	if err := binary.Write(h, binary.BigEndian, counter); err != nil {
@@ -352,8 +388,8 @@ func (t *TOTP) hotp(counter uint64) (string, error) {
 	}
 
 	hs := h.Sum(nil)
-	offset := hs[len(hs)-1] & 0xf                                      //nolint:gomnd
-	sbits := binary.BigEndian.Uint32(hs[offset:offset+4]) & 0x7fffffff //nolint:gomnd
+	offset := hs[len(hs)-1] & 0xf
+	sbits := binary.BigEndian.Uint32(hs[offset:offset+4]) & 0x7fffffff
 	format := fmt.Sprintf("%%0%dd", t.digits)
 
 	return fmt.Sprintf(format, sbits%uint32(math.Pow10(int(t.digits)))), nil
