@@ -135,7 +135,7 @@ type Params struct {
 	HashAlgorithm HashAlgorithm
 	SecretLength  uint
 	Digits        uint8
-	Period        time.Duration
+	PeriodSeconds uint32
 	Lookback      uint
 }
 
@@ -148,8 +148,8 @@ func (p *Params) applyDefaults() {
 		p.Digits = defaultDigits
 	}
 
-	if p.Period == 0 {
-		p.Period = defaultPeriod
+	if p.PeriodSeconds == 0 {
+		p.PeriodSeconds = uint32(defaultPeriod / time.Second)
 	}
 
 	if p.Lookback == 0 {
@@ -170,6 +170,9 @@ func (p *Params) validate() error {
 
 	if p.AccountName == "" {
 		errs = append(errs, fmt.Errorf("account name must not be empty: %w", ErrInvalid))
+	}
+	if _, ok := algToHash[p.HashAlgorithm]; !ok {
+		errs = append(errs, fmt.Errorf("unsupported hash algorithm: %w", ErrInvalid))
 	}
 
 	return errors.Join(errs...)
@@ -196,7 +199,7 @@ func New(params Params) (*TOTP, error) {
 		issuer:      params.Issuer,
 		accountName: params.AccountName,
 		digits:      params.Digits,
-		period:      params.Period,
+		period:      time.Duration(params.PeriodSeconds) * time.Second,
 		lookback:    params.Lookback,
 	}, nil
 }
