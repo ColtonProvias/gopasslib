@@ -328,6 +328,141 @@ func TestVerify(t *testing.T) {
 	}
 }
 
+func TestVerifyCounter(t *testing.T) {
+	otp := &TOTP{
+		secret:    []byte("12345678901234567890123456789012"),
+		algorithm: SHA256,
+		digits:    8,
+		period:    30 * time.Second,
+		lookback:  1,
+	}
+
+	now := time.Unix(1234567890, 0)
+	wantCounter := uint64(now.Unix() / 30)
+
+	for _, test := range []struct {
+		name        string
+		time        time.Time
+		token       string
+		wantCounter uint64
+		wantErr     error
+	}{
+		{
+			name:        "current period",
+			time:        now,
+			token:       "91819424",
+			wantCounter: wantCounter,
+		},
+		{
+			name:        "lookback period",
+			time:        now.Add(30 * time.Second),
+			token:       "91819424",
+			wantCounter: wantCounter,
+		},
+		{
+			name:    "expired token",
+			time:    now.Add(60 * time.Second),
+			token:   "91819424",
+			wantErr: ErrTokenFailed,
+		},
+		{
+			name:    "short token",
+			time:    now,
+			token:   "123456",
+			wantErr: ErrTokenFailed,
+		},
+		{
+			name:    "invalid token",
+			time:    now,
+			token:   "abcdefgh",
+			wantErr: ErrTokenFailed,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gotCounter, err := otp.verifyCounter(test.time, test.token)
+
+			if !errors.Is(err, test.wantErr) {
+				t.Fatalf("verifyCounter() error = %v, want %v", err, test.wantErr)
+			}
+
+			if err == nil && gotCounter != test.wantCounter {
+				t.Errorf("verifyCounter() counter = %d, want %d",
+					gotCounter, test.wantCounter)
+			}
+		})
+	}
+}
+
+func TestVerifyCounterZero(t *testing.T) {
+	otp := &TOTP{
+		secret:    []byte("12345678901234567890123456789012"),
+		algorithm: SHA256,
+		digits:    8,
+		period:    30 * time.Second,
+		lookback:  1,
+	}
+
+	now := time.Unix(0, 0)
+
+	code, err := otp.totp(now)
+	if err != nil {
+		t.Fatalf("totp() error = %v", err)
+	}
+
+	counter, err := otp.verifyCounter(now, code)
+	if err != nil {
+		t.Fatalf("verifyCounter() error = %v", err)
+	}
+
+	if counter != 0 {
+		t.Errorf("verifyCounter() counter = %d, want 0", counter)
+	}
+}
+
+func TestVerifyCounterCustomPeriod(t *testing.T) {
+	otp := &TOTP{
+		secret:    []byte("12345678901234567890123456789012"),
+		algorithm: SHA256,
+		digits:    8,
+		period:    60 * time.Second,
+		lookback:  1,
+	}
+
+	now := time.Unix(1234567890, 0)
+	wantCounter := uint64(now.Unix() / 60)
+
+	code, err := otp.totp(now)
+	if err != nil {
+		t.Fatalf("totp() error = %v", err)
+	}
+
+	for _, test := range []struct {
+		name string
+		time time.Time
+	}{
+		{
+			name: "current period",
+			time: now,
+		},
+		{
+			name: "lookback period",
+			time: now.Add(60 * time.Second),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			counter, err := otp.verifyCounter(test.time, code)
+			if err != nil {
+				t.Fatalf("verifyCounter() error = %v", err)
+			}
+
+			if counter != wantCounter {
+				t.Errorf("verifyCounter() counter = %d, want %d",
+					counter, wantCounter)
+			}
+		})
+	}
+}
+
 func TestNew(t *testing.T) {
 	for _, test := range []struct {
 		name    string

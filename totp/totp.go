@@ -404,25 +404,32 @@ func (t *TOTP) Generate() (string, error) {
 	return t.totp(time.Now())
 }
 
-func (t *TOTP) verify(cur time.Time, code string) error {
+func (t *TOTP) verifyCounter(cur time.Time, code string) (uint64, error) {
 	if len(code) != int(t.digits) {
-		return ErrTokenFailed
+		return 0, ErrTokenFailed
 	}
 
 	for i := 0; i <= int(t.lookback); i++ {
-		generated, err := t.totp(cur)
+		counter := uint64(cur.Unix() / int64(t.period.Seconds()))
+
+		generated, err := t.hotp(counter)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
 		if generated == code {
-			return nil
+			return counter, nil
 		}
 
 		cur = cur.Add(-t.period)
 	}
 
-	return ErrTokenFailed
+	return 0, ErrTokenFailed
+}
+
+func (t *TOTP) verify(cur time.Time, code string) error {
+	_, err := t.verifyCounter(cur, code)
+	return err
 }
 
 // Verify verifies a given TOTP.
